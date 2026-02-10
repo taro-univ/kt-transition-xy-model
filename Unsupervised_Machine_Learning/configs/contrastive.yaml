@@ -1,0 +1,87 @@
+# ==========================================================
+# Baseline Contrastive Learning (SimCLR-style)
+# No physical auxiliary constraint
+# ==========================================================
+
+experiment:
+  name: "xy_contrastive_baseline_L32"
+  description: >
+    Pure SimCLR contrastive learning without helicity constraint.
+    Used as baseline for comparison.
+
+seed: 42
+device: "cuda"
+
+# ----------------------------------------------------------
+# Data
+# ----------------------------------------------------------
+data:
+  npz_path: "data/ml_xy_L32_1000samples.npz"
+  spin_key: "phi"
+  temp_key: "T"
+
+  lattice_size: 32
+  use_cos_sin_encoding: false
+  in_channels: 1
+
+  batch_size: 256
+  num_workers: 4
+  val_ratio: 0.1
+  drop_last: true
+
+  augment:
+    global_rotation: true
+    spatial_flip: true
+    spatial_rotate90: true
+    gaussian_noise:
+      enable: true
+      sigma: 0.03
+
+# ----------------------------------------------------------
+# Model
+# ----------------------------------------------------------
+model:
+  encoder_type: "single"
+  encoder_channels: [32, 64, 128]
+
+  projector:
+    hidden_dim: 256
+    out_dim: 64
+
+  activation: "relu"
+  use_batchnorm: true
+
+# ----------------------------------------------------------
+# Contrastive loss
+# ----------------------------------------------------------
+contrastive:
+  loss_type: "nt_xent"
+  temperature: 0.5
+
+# ----------------------------------------------------------
+# Training
+# ----------------------------------------------------------
+train:
+  num_epochs: 200
+  amp: true
+
+  optimizer:
+    type: "adam"
+    lr: 1.0e-3
+    weight_decay: 1.0e-6
+
+  scheduler:
+    type: "cosine"
+    T_max: 200
+
+# ----------------------------------------------------------
+# Logging
+# ----------------------------------------------------------
+logging:
+  checkpoint_dir: "results/checkpoint/contrastive"
+  latent_dir: "results/latent/contrastive"
+  plots_dir: "results/plots/contrastive"
+
+  log_interval: 50
+  val_interval: 1
+  save_best: true
