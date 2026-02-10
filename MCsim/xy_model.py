@@ -22,35 +22,7 @@ from typing import List, Tuple, Optional
 import math
 import numpy as np
 
-PI = float(np.pi)
-TWO_PI = float(2.0 * np.pi)
-
-__all__ = [
-    "PI",
-    "TWO_PI",
-    "wrap_angle",
-    "CorrBins",
-    "TimeSeries",
-    "SnapshotStore",
-    "XYState",
-    "RunBuffers",
-]
-
-
-def wrap_angle(x: np.ndarray | float) -> np.ndarray | float:
-    """
-    Wrap angle(s) to the interval (-pi, pi].
-
-    Notes
-    -----
-    - This function is vectorized.
-    - The endpoint -pi is mapped to +pi to enforce (-pi, pi].
-    """
-    y = (np.asarray(x) + PI) % TWO_PI - PI
-    if isinstance(y, np.ndarray):
-        y[y <= -PI] += TWO_PI
-        return y
-    return float(y + TWO_PI) if y <= -PI else float(y)
+from MCsim.angles import wrap_angle
 
 
 @dataclass(slots=True)
