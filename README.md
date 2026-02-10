@@ -82,16 +82,56 @@ and the behavior of spin–spin correlation functions.
 ```
 kt-transition-xy-model/
 └─ MCsim/ # Monte Carlo simulation core
-├─ xy_model.py # XY model definition (Hamiltonian, parameters)
-├─ angles.py # Angle/spin representation utilities
-├─ initial.py # Initialization of spin configurations
-├─ update.py # MC updates (e.g., Metropolis / over-relaxation)
-├─ measure.py # Observable measurements (E, helicity, vortices, etc.)
-├─ stats_utils.py # Statistics utilities (binning / jackknife / errors)
+├─ xy_model.py # XY model state and Hamiltonian container
+├─ angles.py # Angle wrapping, PBC helpers, plaquette winding
+├─ config.py # Simulation configuration and JSON I/O
+├─ initial.py # Initial conditions (random, uniform, vortex pairs)
+├─ update.py # MC update kernels (Metropolis / over-relaxation / Wolff)
+├─ measure.py # Observable measurements (Υ, vortices, correlations)
 ├─ loop.py # Main simulation loop (thermalize, sample, save)
-├─ analysis.py # Post-processing helpers for raw outputs
-├─ io_utils.py # I/O helpers (save/load results, metadata)
-├─ visualize.py # Plotting / visualization helpers
-├─ config.py # Experiment configuration (L, T, sweeps, seeds)
-└─ check.py # Sanity checks / validation utilities
+├─ analysis.py # Post-analysis (Tc, η, ξ, KT scaling)
+└─ check.py # Theory-level consistency checks
 ```
+
+
+Each module has a **single, well-defined responsibility**, and dependencies
+are kept strictly one-directional.
+
+---
+
+## Typical Workflow
+
+1. **Configure** the simulation using `config.py`
+2. **Run** Monte Carlo sweeps via `loop.py`
+3. **Measure** observables during sampling
+4. **Analyze** results using `analysis.py`
+5. **Verify** theoretical consistency with `check.py`
+
+---
+
+## Analysis and Theory Checks
+
+- Tc estimation from the helicity modulus crossing with `2T / pi`
+- Low-temperature behavior consistent with spin-wave theory
+- Universal jump: `Upsilon(Tc-) = 2Tc / pi`
+- Critical exponent at Tc: `eta(Tc) ≈ 1/4`
+- Vortex unbinding observed through vortex density
+
+Quantitative analysis is separated from qualitative theory checks by design.
+
+
+---
+
+## Design Philosophy
+
+- Explicit separation of *model*, *algorithm*, *measurement*, and *analysis*
+- Minimal hidden state; all randomness is explicit and reproducible
+- Emphasis on **physical interpretability**, not black-box numerics
+- Code written to be readable by both physicists and non-specialists
+
+---
+
+## Notes
+
+This repository was originally developed as part of an undergraduate thesis
+project and has been refactored for clarity, reproducibility, and public release.
