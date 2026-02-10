@@ -1,0 +1,107 @@
+# ==========================================================
+# Helicity-regularized Contrastive Learning
+# Used in undergraduate thesis experiments
+# ==========================================================
+
+experiment:
+  name: "xy_helicity_contrastive_L32"
+  description: >
+    SimCLR-style contrastive learning with weak helicity
+    regression constraint to align latent geometry with Υ.
+
+seed: 42
+device: "cuda"
+
+# ----------------------------------------------------------
+# Data
+# ----------------------------------------------------------
+data:
+  npz_path: "data/ml_xy_L32_1000samples.npz"
+  spin_key: "phi"
+  temp_key: "T"
+
+  lattice_size: 32
+  use_cos_sin_encoding: true
+  in_channels: 2
+
+  batch_size: 256
+  num_workers: 4
+  val_ratio: 0.1
+  drop_last: true
+
+  # ----- Physics-preserving augmentation -----
+  augment:
+    global_rotation: true
+    spatial_flip: true
+    spatial_rotate90: true
+    gaussian_noise:
+      enable: false
+      sigma: 0.03
+
+  # ----- Helicity target (auxiliary constraint) -----
+  helicity:
+    enable: true
+    targets_path: "data/ml_xy_L32_1000samples.npz"
+    mode: "by_index"
+    target_key: "Y"
+
+# ----------------------------------------------------------
+# Model
+# ----------------------------------------------------------
+model:
+  encoder_type: "single"
+  encoder_channels: [32, 64, 128]
+
+  projector:
+    hidden_dim: 256
+    out_dim: 128
+
+  activation: "relu"
+  use_batchnorm: true
+
+  helicity_head:
+    enable: true
+    # hidden_dim: auto (D//4)
+
+# ----------------------------------------------------------
+# Contrastive loss
+# ----------------------------------------------------------
+contrastive:
+  loss_type: "nt_xent"
+  temperature: 0.5
+
+# ----------------------------------------------------------
+# Combined loss
+# ----------------------------------------------------------
+loss:
+  # Helicity weak constraint weight
+  lambda_Y: "const(5e-2)"
+
+# ----------------------------------------------------------
+# Training
+# ----------------------------------------------------------
+train:
+  num_epochs: 200
+  amp: true
+
+  optimizer:
+    type: "adamw"
+    lr: 1.0e-3
+    weight_decay: 1.0e-4
+    betas: [0.9, 0.999]
+
+  scheduler:
+    type: "none"
+
+# ----------------------------------------------------------
+# Logging
+# ----------------------------------------------------------
+logging:
+  checkpoint_dir: "results/checkpoint/helicity_contrastive"
+  latent_dir: "results/latent/helicity_contrastive"
+  plots_dir: "results/plots/helicity_contrastive"
+
+  log_interval: 50
+  val_interval: 1
+  save_best: true
+  save_last: true
