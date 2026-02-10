@@ -1,0 +1,81 @@
+# ==========================================================
+# Multi-scale Contrastive Encoder
+# Extension toward finite-size / multi-lengthscale analysis
+# ==========================================================
+
+experiment:
+  name: "xy_contrastive_multiscale_L32"
+  description: >
+    Multi-scale CNN encoder with multiple receptive fields
+    to capture vortex-core and long-range correlations.
+
+seed: 42
+device: "cuda"
+
+# ----------------------------------------------------------
+# Data
+# ----------------------------------------------------------
+data:
+  npz_path: "data/ml_xy_L32_1000samples.npz"
+  spin_key: "phi"
+  temp_key: "T"
+
+  lattice_size: 32
+  use_cos_sin_encoding: true
+  in_channels: 2
+
+  batch_size: 256
+  num_workers: 4
+  val_ratio: 0.1
+
+# ----------------------------------------------------------
+# Model
+# ----------------------------------------------------------
+model:
+  encoder_type: "multi_scale"
+  encoder_channels: [96, 192, 384, 768]
+
+  kernel_sizes: [3, 7, 15]
+
+  projector:
+    hidden_dim: 256
+    out_dim: 64
+
+  activation: "relu"
+  use_batchnorm: true
+
+# ----------------------------------------------------------
+# Contrastive loss
+# ----------------------------------------------------------
+contrastive:
+  loss_type: "nt_xent"
+  temperature: 0.5
+
+# ----------------------------------------------------------
+# Training
+# ----------------------------------------------------------
+train:
+  num_epochs: 200
+  amp: true
+
+  optimizer:
+    type: "adam"
+    lr: 1.0e-3
+    weight_decay: 1.0e-5
+
+  scheduler:
+    type: "cosine"
+    T_max: 200
+
+  grad_clip: 1.0
+
+# ----------------------------------------------------------
+# Logging
+# ----------------------------------------------------------
+logging:
+  checkpoint_dir: "results/checkpoint/contrastive_multiscale"
+  latent_dir: "results/latent/contrastive_multiscale"
+  plots_dir: "results/plots/contrastive_multiscale"
+
+  log_interval: 50
+  val_interval: 1
