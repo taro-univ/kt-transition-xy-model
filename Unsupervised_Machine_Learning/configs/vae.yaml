@@ -1,0 +1,95 @@
+# ===========================
+# VAE config for XY model
+# ===========================
+
+experiment_name: "xy_vae_L32"
+
+seed: 42
+device: "cuda"     # "cuda" or "cpu"
+
+# ---------------------------
+# Data settings
+# ---------------------------
+data:
+  # Path to NPZ file containing spin configurations
+  npz_path: "data/ml_xy_L32_1000samples.npz"
+
+  # Keys inside the NPZ file
+  spin_key: "phi"    # spin angles φ
+  temp_key: "T"      # temperature (used for analysis / plotting)
+
+  batch_size: 128
+  num_workers: 4
+  shuffle: true
+
+  lattice_size: 32
+  in_channels: 1      # single-channel φ input
+
+# ---------------------------
+# Model settings
+# ---------------------------
+model:
+  type: "conv_vae"
+
+  # Encoder channel widths (ConvBlocks)
+  encoder_channels:
+    - 32
+    - 64
+    - 128
+
+  # Latent dimension (try 2, 4, 8, ...)
+  latent_dim: 8
+
+  # Decoder channel widths (DeconvBlocks)
+  decoder_channels:
+    - 64
+    - 32
+
+  use_batchnorm: true
+  activation: "relu"  # e.g., "relu"
+
+# ---------------------------
+# Training settings
+# ---------------------------
+train:
+  num_epochs: 150
+  optimizer: "adam"
+  lr: 1.0e-3
+  weight_decay: 1.0e-5
+
+  scheduler:
+    type: "cosine"     # "none" / "step" / "cosine" / ...
+    T_max: 150
+
+  amp: true           # mixed precision
+  grad_clip: null
+
+# ---------------------------
+# Loss settings
+# ---------------------------
+loss:
+  recon_type: "mse"   # reconstruction loss: "mse" or "l1"
+  recon_weight: 1.0
+
+  # β-VAE parameter (KL weight)
+  kl_weight: 1.0
+
+  # Optional KL annealing (linearly ramp KL weight)
+  kl_anneal:
+    enable: true
+    start_epoch: 0
+    end_epoch: 50     # ramp from 0 -> kl_weight over this range
+
+# ---------------------------
+# Logging / output
+# ---------------------------
+logging:
+  log_interval: 50
+  val_interval: 1
+
+  checkpoint_dir: "results/checkpoint/vae"
+  latent_dir: "results/latent/vae"
+  plots_dir: "results/plots/vae"
+
+  save_best_metric: "val_total_loss"
+  save_top_k: 3
