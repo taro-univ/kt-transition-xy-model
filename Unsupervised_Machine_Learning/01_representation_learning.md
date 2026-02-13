@@ -210,24 +210,29 @@ plt.show()
 
 
 ## 3. Cluster Structure vs Temperature
-Based on the UMAP visualization above, we next perform K-means clustering in latent space.
+Based on the UMAP visualization, we perform **K-means clustering (k = 3)** in the original latent space.
 
-The number of clusters is set to **k = 3**, motivated by:
+The choice of \(k = 3\) is motivated by:
+
 - The physical expectation of three regimes in the 2D XY model  
   (low-temperature, intermediate/critical, and high-temperature phases)
-- The clear three-structure separation observed in the helicity-aware UMAP embedding
+- The three-structure separation observed in the helicity-aware embedding
 
-Clustering is applied directly in the original latent space (not in UMAP space).
-We then compute temperature-dependent cluster probabilities to quantify
-how structural dominance shifts across the transition.
+Clustering is applied directly in latent space (not in UMAP space) to avoid projection artifacts.
 
-We examine how K-means cluster membership changes as a function of temperature.  
-For each temperature \(T\), we compute the probability \(P_T(k)\) of belonging to cluster \(k\).  
-Clear dominance shifts across \(T\) indicate the emergence of distinct structural regimes.
+For each temperature \(T\), we compute the cluster probability  
+\[
+P_T(k)
+\]
+which represents the fraction of samples assigned to cluster \(k\).
+
+Clear dominance shifts in \(P_T(k)\) across temperature indicate
+the emergence of distinct structural regimes.
 
 ![Cluster probability vs T](results/notebook_data/4model_Cluster_prob_vs_T.png)
 <details>
 <summary>Show code: Cluster probability vs T visualization (AE / VAE / Contrastive / Helicity-Contrastive)</summary>
+    
 ```python
 import subprocess
 from pathlib import Path
@@ -317,20 +322,7 @@ plt.show()
 
 ```
 </details>
-To ensure reproducibility and separation of concerns,  
-cluster statistics are computed using the standalone script:
 
-`analysis/cluster_vs_T.py`
-
-For each representation (AE, VAE, Contrastive, Helicity-Contrastive),  
-we:
-
-1. Run K-means clustering in latent space
-2. Compute temperature-dependent cluster probabilities
-3. Compare structural transitions across models
-
-This allows us to evaluate whether the proposed helicity-aware method
-captures a clearer three-regime structure.
 
 
 ## 5. Latent vs Temperature
