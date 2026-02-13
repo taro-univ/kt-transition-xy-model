@@ -75,6 +75,9 @@ This visualization allows us to inspect:
 - Whether low- and high-temperature regimes separate clearly
 - Whether an intermediate regime emerges
 - Whether the proposed helicity-aware model exhibits improved structural organization
+## UMAP Comparison
+
+![UMAP comparison](results/notebook_data/umap_compare_4models.png)
 
 <details>
 <summary>Show code: UMAP visualization (AE / VAE / Contrastive / Helicity-Contrastive)</summary>
@@ -206,7 +209,129 @@ plt.show()
 </details>
 
 
-## 4. Cluster Structure vs Temperature
+## 3. Cluster Structure vs Temperature
+Based on the UMAP visualization above, we next perform K-means clustering in latent space.
+
+The number of clusters is set to **k = 3**, motivated by:
+- The physical expectation of three regimes in the 2D XY model  
+  (low-temperature, intermediate/critical, and high-temperature phases)
+- The clear three-structure separation observed in the helicity-aware UMAP embedding
+
+Clustering is applied directly in the original latent space (not in UMAP space).
+We then compute temperature-dependent cluster probabilities to quantify
+how structural dominance shifts across the transition.
+
+We examine how K-means cluster membership changes as a function of temperature.  
+For each temperature \(T\), we compute the probability \(P_T(k)\) of belonging to cluster \(k\).  
+Clear dominance shifts across \(T\) indicate the emergence of distinct structural regimes.
+
+![Cluster probability vs T](results/notebook_data/4model_Cluster_prob_vs_T.png)
+<details>
+<summary>Show code: Cluster probability vs T visualization (AE / VAE / Contrastive / Helicity-Contrastive)</summary>
+```python
+import subprocess
+from pathlib import Path
+
+DATA_DIR = Path("results/notebook_data")
+SCRIPT = Path("analysis/cluster_vs_T.py")
+
+latent = DATA_DIR / "helicity_contrastive_latent_small.npz"
+out_dir = DATA_DIR  
+
+cmd = [
+    "python", str(SCRIPT),
+    "--latent", str(latent),
+    "--out_dir", str(out_dir),
+    "--n_clusters", "3",
+    "--seed", "42",
+]
+
+print("Running:\n ", " ".join(cmd))
+subprocess.run(cmd, check=True)
+print("[OK] cluster_vs_T finished.")
+
+DATA_DIR = Path("results/notebook_data")
+SCRIPT = Path("analysis/cluster_vs_T.py")
+
+models = {
+    "AE": "ae_latent.npz",
+    "VAE": "vae_latent.npz",
+    "Contrastive": "contrastive_latent_small.npz",
+    "Helicity-Contrastive": "helicity_contrastive_latent_small.npz",
+}
+
+for name, filename in models.items():
+    latent_path = DATA_DIR / filename
+    
+    cmd = [
+        sys.executable,  
+        str(SCRIPT),
+        "--latent", str(latent_path),
+        "--out_dir", str(DATA_DIR),
+        "--n_clusters", "3",
+        "--seed", "42",
+    ]
+    
+    print(f"\n[Running cluster_vs_T for {name}]")
+    subprocess.run(cmd, check=True)
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+DATA_DIR = Path("results/notebook_data")
+
+models = {
+    "AE": "ae_latent_cluster_vs_T.npz",
+    "VAE": "vae_latent_cluster_vs_T.npz",
+    "Contrastive": "contrastive_latent_small_cluster_vs_T.npz",
+    "Helicity-Contrastive": "helicity_contrastive_latent_small_cluster_vs_T.npz",
+}
+
+fig, axes = plt.subplots(2, 2, figsize=(12, 9), constrained_layout=True)
+axes = axes.ravel()
+
+for ax, (name, filename) in zip(axes, models.items()):
+    
+    d = np.load(DATA_DIR / filename)
+    T = d["T"]
+    P = d["cluster_probs"]
+    
+    K = P.shape[1]
+    
+    for k in range(K):
+        ax.plot(T, P[:, k], marker="o", linewidth=1.8, label=f"Cluster {k}")
+    
+    ax.set_title(name)
+    ax.set_xlabel("Temperature T")
+    ax.set_ylabel("P_T(cluster=k)")
+    ax.set_ylim(-0.02, 1.02)
+    ax.grid(True, alpha=0.3)
+    
+    if name == "Helicity-Contrastive":
+        for spine in ax.spines.values():
+            spine.set_linewidth(2.5)
+    
+    ax.legend(fontsize=8)
+
+plt.show()
+
+```
+</details>
+To ensure reproducibility and separation of concerns,  
+cluster statistics are computed using the standalone script:
+
+`analysis/cluster_vs_T.py`
+
+For each representation (AE, VAE, Contrastive, Helicity-Contrastive),  
+we:
+
+1. Run K-means clustering in latent space
+2. Compute temperature-dependent cluster probabilities
+3. Compare structural transitions across models
+
+This allows us to evaluate whether the proposed helicity-aware method
+captures a clearer three-regime structure.
+
 
 ## 5. Latent vs Temperature
 
