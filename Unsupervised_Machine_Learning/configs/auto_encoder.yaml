@@ -1,0 +1,79 @@
+experiment_name: "xy_autoencoder_L32"
+
+seed: 42
+device: "cpu"
+
+# ---------------------------
+# Data settings
+# ---------------------------
+data:
+  # Path to NPZ file containing spin configurations
+  npz_path: "data/ml_xy_L32_1000samples.npz"
+
+  # Keys inside the NPZ file
+  spin_key: "phi"
+  temp_key: "T"
+
+  batch_size: 128
+  num_workers: 4
+  shuffle: true
+
+  # Input shape
+  in_channels: 1       # 'phi' is stored as 1-channel in the NPZ
+  lattice_size: 32
+
+# ---------------------------
+# Model settings
+# ---------------------------
+model:
+  type: "conv_autoencoder"
+
+  encoder_channels:
+    - 32
+    - 64
+    - 128
+
+  decoder_channels:
+    - 64
+    - 32
+
+  latent_dim: 8
+  use_batchnorm: true
+  activation: "relu"
+
+# ---------------------------
+# Training settings
+# ---------------------------
+train:
+  num_epochs: 100
+  optimizer: "adam"
+  lr: 1.0e-3
+  weight_decay: 1.0e-5
+
+  scheduler:
+    type: "cosine"
+    T_max: 100
+
+  grad_clip: null
+  amp: true
+
+# ---------------------------
+# Loss settings
+# ---------------------------
+loss:
+  type: "mse"          # reconstruction loss (MSE baseline)
+  recon_weight: 1.0    # (even if unused in your current trainer, harmless)
+
+# ---------------------------
+# Logging / output
+# ---------------------------
+logging:
+  log_interval: 50
+  val_interval: 1
+
+  checkpoint_dir: "results/checkpoint/autoencoder"
+  latent_dir: "results/latent/autoencoder"
+  plots_dir: "results/plots/autoencoder"
+
+  save_best_metric: "val_recon_loss"   # safe even if not used strictly
+  save_top_k: 3
