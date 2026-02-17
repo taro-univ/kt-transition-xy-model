@@ -1,5 +1,36 @@
 # Representation Learning for the 2D XY Model
 
+## Executive Summary
+
+This project investigates whether physics-aware representation learning
+can better capture phase structure in the 2D XY model.
+
+Key findings:
+
+- Helicity-aware contrastive learning reveals a clear three-regime structure.
+- Cluster dominance shifts consistently across temperature.
+- Latent sensitivity peaks near the estimated critical temperature.
+
+These results suggest that incorporating domain knowledge
+improves structural fidelity in unsupervised learning.
+Unlike symmetry-breaking transitions, the KT transition does not admit a simple binary phase structure, making it a challenging benchmark for representation learning.
+
+The project emphasizes objective design, latent geometry analysis,
+and reproducible evaluation pipelines.
+
+## Why This Matters
+
+This experiment demonstrates how incorporating domain-specific signals
+into representation learning can improve structural interpretability.
+
+The approach is generalizable to:
+- Scientific machine learning
+- Structured data representation
+- Physics-informed AI systems
+
+This study reframes phase detection as a representation learning problem rather than a classification problem.
+
+
 ## 1. Problem Setting
 
 ### Background
@@ -236,27 +267,13 @@ the emergence of distinct structural regimes.
 ```python
 import subprocess
 from pathlib import Path
+import sys
 
 DATA_DIR = Path("results/notebook_data")
 SCRIPT = Path("analysis/cluster_vs_T.py")
 
 latent = DATA_DIR / "helicity_contrastive_latent_small.npz"
 out_dir = DATA_DIR  
-
-cmd = [
-    "python", str(SCRIPT),
-    "--latent", str(latent),
-    "--out_dir", str(out_dir),
-    "--n_clusters", "3",
-    "--seed", "42",
-]
-
-print("Running:\n ", " ".join(cmd))
-subprocess.run(cmd, check=True)
-print("[OK] cluster_vs_T finished.")
-
-DATA_DIR = Path("results/notebook_data")
-SCRIPT = Path("analysis/cluster_vs_T.py")
 
 models = {
     "AE": "ae_latent.npz",
@@ -282,15 +299,6 @@ for name, filename in models.items():
 
 import numpy as np
 import matplotlib.pyplot as plt
-
-DATA_DIR = Path("results/notebook_data")
-
-models = {
-    "AE": "ae_latent_cluster_vs_T.npz",
-    "VAE": "vae_latent_cluster_vs_T.npz",
-    "Contrastive": "contrastive_latent_small_cluster_vs_T.npz",
-    "Helicity-Contrastive": "helicity_contrastive_latent_small_cluster_vs_T.npz",
-}
 
 fig, axes = plt.subplots(2, 2, figsize=(12, 9), constrained_layout=True)
 axes = axes.ravel()
@@ -323,17 +331,144 @@ plt.show()
 ```
 </details>
 
+## 4. Latent Representation vs Temperature
+
+To maintain a lightweight and reproducible notebook structure,
+temperature-dependent latent statistics are computed using a standalone script:
+
+`analysis/latent_vs_T.py`
+
+This design separates:
+
+- Core analysis logic (script)
+- Visualization and comparison (notebook)
+
+The notebook executes the script for each model and then loads
+the generated figures for side-by-side comparison.
+
+### Implementation Design
+
+- Each model’s latent file is processed independently.
+- Temperature-binned latent means are computed.
+- Results are saved as PNG figures and optional CSV statistics.
+- The notebook verifies successful generation before visualization.
+
+This modular structure ensures:
+- Reproducibility
+- Clear experiment separation
+- Clean pipeline design
+
+![latent vs T](results/notebook_data/latent_vs_T_4models.png)
+<details>
+<summary>Show code: Cluster probability vs T visualization (AE / VAE / Contrastive / Helicity-Contrastive)</summary>
+    
+```python
+import sys
+import subprocess
+from pathlib import Path
+
+DATA_DIR = Path("results/notebook_data")
+SCRIPT = Path("analysis/latent_vs_T.py")
+
+latents = {
+    "AE": DATA_DIR / "ae_latent.npz",
+    "VAE": DATA_DIR / "vae_latent.npz",
+    "Contrastive": DATA_DIR / "contrastive_latent_small.npz",
+    "Helicity-Contrastive (Proposed)": DATA_DIR / "helicity_contrastive_latent_small.npz",
+}
+
+OUT_DIR = DATA_DIR
+MAX_DIMS = 64
+
+if not SCRIPT.exists():
+    raise FileNotFoundError(f"Missing script: {SCRIPT}")
+
+for name, fp in latents.items():
+    if not fp.exists():
+        raise FileNotFoundError(f"Missing latent for {name}: {fp}")
+
+print("[OK] Inputs found. Running latent_vs_T.py ...")
+
+for name, latent_path in latents.items():
+    cmd = [
+        sys.executable,
+        str(SCRIPT),
+        "--latent", str(latent_path),
+        "--out_dir", str(OUT_DIR),
+        "--max_dims", str(MAX_DIMS),
+    ]
+    print(f"\n[RUN] {name}: {' '.join(cmd)}")
+    res = subprocess.run(cmd, text=True, capture_output=True)
+
+    if res.returncode != 0:
+        print("\n[STDOUT]\n", res.stdout)
+        print("\n[STDERR]\n", res.stderr)
+        raise RuntimeError(f"latent_vs_T.py failed for {name}")
+
+    
+    if res.stdout:
+        print("\n".join(res.stdout.splitlines()[-3:]))
+
+print("\n[OK] Done.")
+
+pngs = {
+    "AE": OUT_DIR / "ae_latent_mean_vs_T.png",
+    "VAE": OUT_DIR / "vae_latent_mean_vs_T.png",
+    "Contrastive": OUT_DIR / "contrastive_latent_small_mean_vs_T.png",
+    "Helicity-Contrastive (Proposed)": OUT_DIR / "helicity_contrastive_latent_small_mean_vs_T.png",
+}
+
+missing = [str(p) for p in pngs.values() if not p.exists()]
+if missing:
+    raise FileNotFoundError(
+        "Some expected plots were not generated:\n" + "\n".join(missing) +
+        "\n\n(If your script uses different filenames, update the 'pngs' dict accordingly.)"
+    )
+
+# --- show 2x2 comparison ---
+fig, axes = plt.subplots(2, 2, figsize=(12, 9), constrained_layout=True)
+axes = axes.ravel()
+
+for ax, (title, fp) in zip(axes, pngs.items()):
+    ax.imshow(Image.open(fp))
+    ax.set_title(title)
+    ax.axis("off")
+
+plt.show()
+
+```
+</details>
 
 
-## 5. Latent vs Temperature
+### ⚠ Dataset Size and Correlation Analysis
 
-## 6. Correlation with Physical Observables
+For GitHub compatibility, all notebook demonstrations use reduced latent files  
+(`*_small.npz`, float32, ~3000 samples).
 
-## 7. Transition Sensitivity (Slope Analysis)
+However, correlation analysis is sensitive to sample size.
 
-## 8. Comparison with Estimated Tc
+Therefore:
 
-## 9. Cluster-Conditioned Correlation Function
+- Spearman correlation coefficients were computed locally using the full dataset.
+- Only the resulting ranked CSV files are included in this repository.
+- The notebook loads these precomputed CSV files for visualization.
 
-## 10. Conclusion
+This approach balances:
+
+- Repository size constraints
+- Statistical reliability
+- Reproducibility of visual results
+
+
+
+
+## 5. Correlation with Physical Observables
+
+## 6. Transition Sensitivity (Slope Analysis)
+
+## 7. Comparison with Estimated Tc
+
+## 8. Cluster-Conditioned Correlation Function
+
+## 9. Conclusion
 
