@@ -258,3 +258,64 @@ This separation ensures:
 - Reproducibility
 - Clean engineering structure
 - Clear linkage between physics and ML
+
+
+# 🛠 How to Run
+
+## 1️⃣ Clone Repository
+
+git clone https://github.com/yourname/kt-transition-xy-model.git
+cd kt-transition-xy-model
+
+
+## 2️⃣ Create Virtual Environment (Recommended)
+
+python -m venv venv
+
+# macOS / Linux
+source venv/bin/activate
+
+# Windows
+venv\Scripts\activate
+
+
+## 3️⃣ Install Dependencies
+
+pip install --upgrade pip
+pip install -r requirements.txt
+
+Python 3.10+ recommended.
+
+
+## 4️⃣ Run Physics Simulation Notebook
+
+cd MCsim
+jupyter notebook Efficient_Monte_Carlo_Simulation.ipynb
+
+This notebook:
+- Explains the 2D XY model
+- Demonstrates vortex detection
+- Shows correlation decay behavior
+- Validates KT-consistent observables
+
+Heavy temperature sweeps are commented for fast inspection.
+
+
+## 5️⃣ Run Representation Learning Notebook
+
+cd ../Unsupervised_Machine_Learning
+jupyter notebook 01_representation_learning.ipynb
+
+This notebook:
+- Trains AE / VAE / Contrastive / Helicity-aware models
+- Visualizes latent geometry
+- Evaluates clustering vs temperature
+- Analyzes transition sensitivity
+
+
+## Optional: Run Full Temperature Sweep (Heavy)
+
+python MCsim/loop.py
+
+Heavy computations are separated from notebooks
+to keep GitHub preview lightweight.
