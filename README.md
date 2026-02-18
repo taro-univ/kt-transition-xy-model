@@ -1,4 +1,9 @@
 # Physics-Aware Representation Learning  
+
+Quick review order:
+1. MC simulation validation
+2. Representation learning notebook
+
 ### Kosterlitz–Thouless Transition as a Structured ML Benchmark
 
 This repository investigates whether **domain-aware objectives**
