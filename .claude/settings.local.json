@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"ML_project2\\\\|ml_project2\" /c/Users/shona/kt-transition-xy-model/Unsupervised_Machine_Learning/analysis/*.py)",
+      "Bash(grep -n \"class ConvBlock\\\\|def get_activation\" /c/Users/shona/kt-transition-xy-model/Unsupervised_Machine_Learning/models/*.py)",
+      "Bash(python:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}

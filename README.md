@@ -265,13 +265,6 @@ python Unsupervised_Machine_Learning/analysis/corr_ranking_latent_vs_observables
 
 ---
 
-## ノートブック
-
-| ノートブック | 内容 |
-|---|---|
-| `MCsim/Efficient_Monte_Carlo_Simulation.ipynb` | ハイブリッド MCMC の検証・ボルテックス可視化・G(r) の KT 理論整合性 |
-| `Unsupervised_Machine_Learning/01_representation_learning.ipynb` | 4モデルの UMAP 比較・クラスタリング・物理量との相関・勾配ピーク解析 |
-
 ### 解析スクリプトと生成物の対応
 
 ノートブック内の各図は以下のスクリプトで生成されている。  

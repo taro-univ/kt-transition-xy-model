@@ -250,12 +250,6 @@ python Unsupervised_Machine_Learning/analysis/corr_ranking_latent_vs_observables
 
 ---
 
-## Notebooks
-
-| Notebook | Contents |
-|----------|----------|
-| `MCsim/Efficient_Monte_Carlo_Simulation.ipynb` | MCMC validation, vortex visualization, G(r) KT consistency |
-| `Unsupervised_Machine_Learning/01_representation_learning.ipynb` | 4-model UMAP comparison, clustering, physical correlations, slope-peak analysis |
 
 ### Script-to-output mapping
 
