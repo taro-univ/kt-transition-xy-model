@@ -18,6 +18,8 @@ Unlike symmetry-breaking transitions, the KT transition does not admit a simple 
 The project emphasizes objective design, latent geometry analysis,
 and reproducible evaluation pipelines.
 
+---
+
 ## Why This Matters
 
 This experiment demonstrates how incorporating domain-specific signals
@@ -30,6 +32,7 @@ The approach is generalizable to:
 
 This study reframes phase detection as a representation learning problem rather than a classification problem.
 
+---
 
 ## 1. Problem Setting
 
@@ -92,6 +95,8 @@ We evaluate representations through:
 The central question is whether helicity-aware training improves structural fidelity in latent space.
 
 ## 2. UMAP Comparison
+
+### Overview
 To qualitatively compare the geometric structure of latent spaces across models,
 we project each representation to 2D using UMAP.
 
@@ -106,7 +111,6 @@ This visualization allows us to inspect:
 - Whether low- and high-temperature regimes separate clearly
 - Whether an intermediate regime emerges
 - Whether the proposed helicity-aware model exhibits improved structural organization
-## UMAP Comparison
 
 ![UMAP comparison](results/notebook_data/umap_compare_4models.png)
 
@@ -442,22 +446,20 @@ plt.show()
 
 ### ⚠ Dataset Size and Correlation Analysis
 
-For GitHub compatibility, all notebook demonstrations use reduced latent files  
-(`*_small.npz`, float32, ~3000 samples).
-
-However, correlation analysis is sensitive to sample size.
-
-Therefore:
-
-- Spearman correlation coefficients were computed locally using the full dataset.
-- Only the resulting ranked CSV files are included in this repository.
-- The notebook loads these precomputed CSV files for visualization.
-
-This approach balances:
-
-- Repository size constraints
-- Statistical reliability
-- Reproducibility of visual results
+> For GitHub compatibility, all notebook demonstrations use reduced latent files
+> (`*_small.npz`, float32, ~3000 samples).
+>
+> However, correlation analysis is sensitive to sample size.
+>
+> Therefore:
+> - Spearman correlation coefficients were computed locally using the full dataset.
+> - Only the resulting ranked CSV files are included in this repository.
+> - The notebook loads these precomputed CSV files for visualization.
+>
+> This approach balances:
+> - Repository size constraints
+> - Statistical reliability
+> - Reproducibility of visual results
 
 
 

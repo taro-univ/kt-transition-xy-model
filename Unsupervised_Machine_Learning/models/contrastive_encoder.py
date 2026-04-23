@@ -23,51 +23,7 @@ import torch
 import torch.nn as nn
 from typing import List, Optional
 
-
-# ============================================================
-# Utility: activation factory
-# ============================================================
-
-def get_activation(name: str) -> nn.Module:
-    """
-    Return activation module by name.
-    """
-    name = name.lower()
-    if name == "relu":
-        return nn.ReLU(inplace=True)
-    elif name == "leaky_relu":
-        return nn.LeakyReLU(0.2, inplace=True)
-    elif name == "elu":
-        return nn.ELU(inplace=True)
-    else:
-        raise ValueError(f"Unknown activation: {name}")
-
-
-# ============================================================
-# Basic Conv Block (stride=2 downsampling)
-# ============================================================
-
-class ConvBlock(nn.Module):
-    """
-    Single convolutional downsampling block:
-
-        Conv2d(stride=2) -> (optional BatchNorm) -> Activation
-
-    This reduces spatial size by factor of 2.
-    """
-
-    def __init__(self, in_ch: int, out_ch: int, use_batchnorm: bool, act: nn.Module):
-        super().__init__()
-
-        layers = [nn.Conv2d(in_ch, out_ch, kernel_size=3, stride=2, padding=1)]
-        if use_batchnorm:
-            layers.append(nn.BatchNorm2d(out_ch))
-        layers.append(act)
-
-        self.block = nn.Sequential(*layers)
-
-    def forward(self, x):
-        return self.block(x)
+from models.nn_utils import get_activation, ConvBlock
 
 
 # ============================================================
@@ -115,7 +71,7 @@ class SimCLREncoder(nn.Module):
         w = lattice_size
 
         for ch in encoder_channels:
-            enc_layers.append(ConvBlock(prev_ch, ch, use_batchnorm, act))
+            enc_layers.append(ConvBlock(prev_ch, ch, use_batchnorm=use_batchnorm, activation=act, kernel_size=3))
             prev_ch = ch
             h //= 2
             w //= 2
@@ -232,7 +188,7 @@ class MultiScaleSimCLREncoder(nn.Module):
         w = lattice_size
 
         for ch in encoder_channels[1:]:
-            enc_layers.append(ConvBlock(prev_ch, ch, use_batchnorm, act))
+            enc_layers.append(ConvBlock(prev_ch, ch, use_batchnorm=use_batchnorm, activation=act, kernel_size=3))
             prev_ch = ch
             h //= 2
             w //= 2

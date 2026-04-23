@@ -3,8 +3,8 @@ import torch
 from torch.utils.data import Dataset
 from typing import Optional, Dict, Any
 
-# Add near your existing imports
 from dataset.helicity_modulus_targets import HelicityTargetConfig, HelicityTargetProvider
+from utils.physics_utils import wrap_angle, vortex_density_from_phi
 
 
 def cos_sin_encoding(phi: np.ndarray) -> np.ndarray:
@@ -410,48 +410,20 @@ def create_xy_dataset_from_config(
 
 
 # ============================================================
-# Physics utilities (used in analysis / diagnostics)
+# Physics utilities re-exported for backwards compatibility
 # ============================================================
-
-def wrap_angle(dtheta: np.ndarray) -> np.ndarray:
-    """Map angle differences to (-pi, pi]."""
-    return (dtheta + np.pi) % (2 * np.pi) - np.pi
-
-
-def vortex_density_from_phi(phi: np.ndarray) -> float:
-    """
-    Compute vortex density from an angle field.
-
-    Parameters
-    ----------
-    phi : np.ndarray of shape (L, L)
-        Angle field in radians.
-
-    Returns
-    -------
-    float
-        Vortex density defined as mean(|q|) over plaquettes,
-        where q is the integer topological charge per plaquette.
-    """
-    # Forward differences with periodic boundary conditions
-    dphi_x = wrap_angle(np.roll(phi, -1, axis=0) - phi)  # (i+1,j) - (i,j)
-    dphi_y = wrap_angle(np.roll(phi, -1, axis=1) - phi)  # (i,j+1) - (i,j)
-
-    # Plaquette circulation:
-    # (i,j)->(i+1,j): dphi_x
-    # (i+1,j)->(i+1,j+1): dphi_y at (i+1,j)
-    # (i+1,j+1)->(i,j+1): -dphi_x at (i,j+1)
-    # (i,j+1)->(i,j): -dphi_y
-    dphi_y_x = np.roll(dphi_y, -1, axis=0)  # dphi_y at (i+1,j)
-    dphi_x_y = np.roll(dphi_x, -1, axis=1)  # dphi_x at (i,j+1)
-
-    circulation = wrap_angle(dphi_x + dphi_y_x - dphi_x_y - dphi_y)
-
-    # Topological charge per plaquette: q = round(circ / 2π)
-    q = np.rint(circulation / (2 * np.pi)).astype(np.int32)
-
-    rho_v = np.mean(np.abs(q))
-    return float(rho_v)
+# wrap_angle and vortex_density_from_phi are defined in utils/physics_utils.py
+# and imported at the top of this file.
+# They remain accessible as dataset.unsupervised_xy_dataset.wrap_angle etc.
+__all__ = [
+    "cos_sin_encoding",
+    "XYSpinBaseDataset",
+    "XYSpinDataset",
+    "XYSpinContrastiveDataset",
+    "create_xy_dataset_from_config",
+    "wrap_angle",
+    "vortex_density_from_phi",
+]
 
 
 """

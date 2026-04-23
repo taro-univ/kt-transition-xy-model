@@ -62,6 +62,8 @@ class Config:
     sample_interval: int = 20
 
     # --- RNG ---
+    # Set an integer for reproducible runs, e.g. seed=42.
+    # None causes NumPy to seed from OS entropy (non-reproducible).
     seed: Optional[int] = None
 
     # --- update method flags ---

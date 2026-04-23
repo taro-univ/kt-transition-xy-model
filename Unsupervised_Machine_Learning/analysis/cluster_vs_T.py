@@ -184,7 +184,7 @@ if __name__ == "__main__":
 """
 Example usage:
 
-python ML_project2/analysis/cluster_vs_T.py \
-    --latent ML_project2/results/latent/autoencoder/autoencoder_latent.npz \
+python Unsupervised_Machine_Learning/analysis/cluster_vs_T.py \
+    --latent Unsupervised_Machine_Learning/results/latent/autoencoder/autoencoder_latent.npz \
     --n_clusters 3
 """

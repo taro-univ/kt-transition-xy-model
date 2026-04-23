@@ -21,7 +21,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from dataset.unsupervised_xy_dataset import create_xy_dataset_from_config
 from models.autoencoder import build_autoencoder_from_config
 from models.vae import build_vae_from_config
-from models.contrastive_encoder import SimCLREncoder
+from models.contrastive_encoder import SimCLREncoder, MultiScaleSimCLREncoder
 
 
 """
@@ -66,7 +66,7 @@ def load_config_and_paths(config_arg: str | None, default_name: str):
     project_root = script_path.parents[1]
 
     if config_arg is None:
-        config_path = project_root / "config" / default_name
+        config_path = project_root / "configs" / default_name
     else:
         config_path = Path(config_arg)
 
@@ -93,13 +93,54 @@ def load_config_and_paths(config_arg: str | None, default_name: str):
     return cfg, project_root
 
 
+def _build_contrastive_encoder(cfg, data_cfg, device):
+    """
+    Build a SimCLREncoder or MultiScaleSimCLREncoder from config.
+
+    Used for both 'contrastive' and 'helicity_contrastive' model types.
+    The helicity head is not constructed here (not needed for latent extraction).
+    """
+    mcfg = cfg["model"]
+    in_channels = int(data_cfg.get("in_channels", 1))
+    lattice_size = int(data_cfg.get("lattice_size", 32))
+    encoder_channels = list(mcfg["encoder_channels"])
+    proj_hidden = int(mcfg["projector"]["hidden_dim"])
+    proj_out = int(mcfg["projector"]["out_dim"])
+    use_bn = bool(mcfg.get("use_batchnorm", True))
+    act_name = str(mcfg.get("activation", "relu"))
+    encoder_type = str(mcfg.get("encoder_type", "single")).lower()
+
+    if encoder_type == "multi_scale":
+        kernel_sizes = mcfg.get("kernel_sizes", [3, 7, 15])
+        return MultiScaleSimCLREncoder(
+            in_channels=in_channels,
+            lattice_size=lattice_size,
+            encoder_channels=encoder_channels,
+            proj_hidden=proj_hidden,
+            proj_out=proj_out,
+            use_batchnorm=use_bn,
+            activation_name=act_name,
+            kernel_sizes=kernel_sizes,
+        ).to(device)
+    else:
+        return SimCLREncoder(
+            in_channels=in_channels,
+            lattice_size=lattice_size,
+            encoder_channels=encoder_channels,
+            proj_hidden=proj_hidden,
+            proj_out=proj_out,
+            use_batchnorm=use_bn,
+            activation_name=act_name,
+        ).to(device)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--model_type",
         type=str,
         default="autoencoder",
-        choices=["autoencoder", "vae", "contrastive"],
+        choices=["autoencoder", "vae", "contrastive", "helicity_contrastive"],
         help="Which model type to extract latent representations from.",
     )
     parser.add_argument(
@@ -128,9 +169,12 @@ def main():
     elif args.model_type == "vae":
         default_cfg_name = "vae.yaml"
         default_ckpt_name = "best_vae.pt"
-    else:
+    elif args.model_type == "contrastive":
         default_cfg_name = "contrastive.yaml"
         default_ckpt_name = "best_contrastive.pt"
+    else:  # helicity_contrastive
+        default_cfg_name = "helicity_contrastive.yaml"
+        default_ckpt_name = "best_helicity_contrastive.pt"
 
     cfg, project_root = load_config_and_paths(args.config, default_cfg_name)
 
@@ -155,24 +199,9 @@ def main():
         model = build_autoencoder_from_config(cfg["model"], cfg["data"]).to(device)
     elif args.model_type == "vae":
         model = build_vae_from_config(cfg["model"], cfg["data"]).to(device)
-    else:
-        mcfg = cfg["model"]
-        in_channels = int(data_cfg.get("in_channels", 1))
-        lattice_size = int(data_cfg.get("lattice_size", 32))
-        encoder_channels = list(mcfg["encoder_channels"])
-        proj_hidden = int(mcfg["projector"]["hidden_dim"])
-        proj_out = int(mcfg["projector"]["out_dim"])
-        use_bn = bool(mcfg.get("use_batchnorm", True))
-        act_name = str(mcfg.get("activation", "relu"))
-        model = SimCLREncoder(
-            in_channels=in_channels,
-            lattice_size=lattice_size,
-            encoder_channels=encoder_channels,
-            proj_hidden=proj_hidden,
-            proj_out=proj_out,
-            use_batchnorm=use_bn,
-            activation_name=act_name,
-        ).to(device)
+    else:  # contrastive or helicity_contrastive
+        # Both share the same encoder architecture; the helicity head is not needed for extraction.
+        model = _build_contrastive_encoder(cfg, data_cfg, device)
 
     # Load checkpoint
     logging_cfg = cfg.get("logging", {})
@@ -214,8 +243,8 @@ def main():
                 _x_rec, mu, logvar, z = model(x)
                 # Use mu as the representation (deterministic w.r.t. model weights and input)
                 z = mu
-            else:  # contrastive
-                # encode() output is the pre-projector representation
+            else:  # contrastive or helicity_contrastive
+                # encode() returns the pre-projector representation h
                 z = model.encode(x)
 
             zs.append(z.detach().cpu().numpy())
@@ -256,11 +285,14 @@ if __name__ == "__main__":
 Usage
 -----
 # Autoencoder latent
-python ML_project2/analysis/latent_extraction.py --model_type autoencoder
+python Unsupervised_Machine_Learning/analysis/latent_extraction.py --model_type autoencoder
 
 # VAE latent (uses mu)
-python ML_project2/analysis/latent_extraction.py --model_type vae
+python Unsupervised_Machine_Learning/analysis/latent_extraction.py --model_type vae
 
 # Contrastive latent (uses encoder pre-projector h)
-python ML_project2/analysis/latent_extraction.py --model_type contrastive
+python Unsupervised_Machine_Learning/analysis/latent_extraction.py --model_type contrastive
+
+# Helicity-aware contrastive latent (proposed method)
+python Unsupervised_Machine_Learning/analysis/latent_extraction.py --model_type helicity_contrastive
 """

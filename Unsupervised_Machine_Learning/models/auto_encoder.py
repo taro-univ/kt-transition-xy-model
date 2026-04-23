@@ -21,101 +21,12 @@ Designed for:
     - Downstream analysis: latent vs temperature, clustering, correlations
 """
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
-
-# ============================================================
-# Small utilities
-# ============================================================
-
-def get_activation(name: str) -> nn.Module:
-    """
-    Return a PyTorch activation module from a config string.
-
-    Expected values (case-insensitive):
-        - "relu"
-        - "leaky_relu"
-        - "elu"
-    """
-    name = name.lower()
-    if name == "relu":
-        return nn.ReLU(inplace=True)
-    elif name == "leaky_relu":
-        return nn.LeakyReLU(0.2, inplace=True)
-    elif name == "elu":
-        return nn.ELU(inplace=True)
-    else:
-        raise ValueError(f"Unknown activation: {name}")
-
-
-class ConvBlock(nn.Module):
-    """
-    Basic encoder block:
-        Conv2d → (BatchNorm2d) → Activation
-
-    Uses kernel_size=4, stride=2, padding=1, which halves spatial resolution.
-    """
-
-    def __init__(
-            self,
-            in_ch: int,
-            out_ch: int,
-            use_batchnorm: bool = True,
-            activation: Optional[nn.Module] = None,
-    ) -> None:
-        super().__init__()
-
-        layers = [nn.Conv2d(in_ch, out_ch, kernel_size=4, stride=2, padding=1)]
-        if use_batchnorm:
-            layers.append(nn.BatchNorm2d(out_ch))
-        if activation is not None:
-            layers.append(activation)
-        self.block = nn.Sequential(*layers)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.block(x)
-
-
-class DeconvBlock(nn.Module):
-    """
-    Basic decoder block:
-        ConvTranspose2d → (BatchNorm2d) → Activation
-
-    Uses kernel_size=4, stride=2, padding=1, which doubles spatial resolution.
-
-    Notes
-    -----
-    The final layer typically omits BatchNorm/Activation to keep output scaling free.
-    """
-
-    def __init__(
-        self,
-        in_ch: int,
-        out_ch: int,
-        use_batchnorm: bool = True,
-        activation: Optional[nn.Module] = None,
-        is_last: bool = False,
-    ) -> None:
-        super().__init__()
-
-        layers = [
-            nn.ConvTranspose2d(in_ch, out_ch, kernel_size=4, stride=2, padding=1)
-        ]
-
-        if not is_last:
-            if use_batchnorm:
-                layers.append(nn.BatchNorm2d(out_ch))
-            if activation is not None:
-                layers.append(activation)
-
-        self.block = nn.Sequential(*layers)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.block(x)
+from models.nn_utils import get_activation, ConvBlock, DeconvBlock
 
 
 # ============================================================

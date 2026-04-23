@@ -61,15 +61,6 @@ nontrivial extensions beyond nearest-neighbor coupling.
 - Mitigates critical slowing down
 - Especially effective near Tc
 
-## Benchmark Summary
-
-| Update Strategy | Near Tc Efficiency | Global Moves | Acceptance Stability |
-|-----------------|-------------------|--------------|----------------------|
-| Metropolis      | Slow              | No           | Moderate             |
-| + Over-relax    | Medium            | No           | Stable               |
-| + Wolff         | Fast              | Yes          | High                 |
-
-
 ### Hybrid Pipeline
 
 Each temperature step combines:
@@ -77,6 +68,16 @@ Each temperature step combines:
 Metropolis → Over-relaxation → (optional) Wolff
 
 This enables both local exploration and global restructuring.
+
+---
+
+## Benchmark Summary
+
+| Update Strategy | Near Tc Efficiency | Global Moves | Acceptance Stability |
+|-----------------|-------------------|--------------|----------------------|
+| Metropolis      | Slow              | No           | Moderate             |
+| + Over-relax    | Medium            | No           | Stable               |
+| + Wolff         | Fast              | Yes          | High                 |
 
 ---
 
